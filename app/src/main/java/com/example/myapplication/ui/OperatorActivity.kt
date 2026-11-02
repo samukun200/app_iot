@@ -117,20 +117,55 @@ class OperatorActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun showPairedDevicesDialog() {
-        val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter?.bondedDevices
-        if (pairedDevices.isNullOrEmpty()) {
-            Toast.makeText(this, "No hay dispositivos Bluetooth emparejados.", Toast.LENGTH_LONG).show()
-            return
+        val pairedDevices = bluetoothAdapter?.bondedDevices ?: emptySet()
+        val optionsList = mutableListOf<String>()
+        val deviceMap = mutableListOf<BluetoothDevice?>()
+
+        pairedDevices.forEach { device ->
+            optionsList.add("${device.name ?: "Dispositivo"}\n${device.address}")
+            deviceMap.add(device)
         }
 
-        val deviceList = pairedDevices.toList()
-        val deviceNames = deviceList.map { "${it.name ?: "Desconocido"}\n${it.address}" }.toTypedArray()
+        optionsList.add("🔌 Conectar por dirección MAC (Emulador/Directo)")
+        deviceMap.add(null)
 
         AlertDialog.Builder(this)
             .setTitle("Seleccionar Dispositivo Maquinaria (Servidor)")
-            .setItems(deviceNames) { _, which ->
-                val selectedDevice = deviceList[which]
-                connectToDevice(selectedDevice)
+            .setItems(optionsList.toTypedArray()) { _, which ->
+                val selectedDevice = deviceMap[which]
+                if (selectedDevice != null) {
+                    connectToDevice(selectedDevice)
+                } else {
+                    showManualAddressDialog()
+                }
+            }
+            .setNegativeButton("Cancelar", null)
+            .show()
+    }
+
+    private fun showManualAddressDialog() {
+        val input = android.widget.EditText(this).apply {
+            hint = "02:00:00:BB:BB:BB"
+            setText("02:00:00:BB:BB:BB")
+            setSelection(text.length)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Conectar por Dirección MAC")
+            .setMessage("Ingrese la dirección MAC del Servidor Supervisor (en emuladores Netsim es 02:00:00:BB:BB:BB):")
+            .setView(input)
+            .setPositiveButton("Conectar") { _, _ ->
+                val address = input.text.toString().trim()
+                if (BluetoothAdapter.checkBluetoothAddress(address)) {
+                    val device = bluetoothAdapter?.getRemoteDevice(address)
+                    if (device != null) {
+                        connectToDevice(device)
+                    } else {
+                        Toast.makeText(this, "Dispositivo no encontrado", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Toast.makeText(this, "Dirección MAC no válida", Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton("Cancelar", null)
             .show()

@@ -18,7 +18,7 @@ object BluetoothSecurityUtils {
     private val SECRET_KEY = "OT_SECURE_KEY_16".toByteArray(Charsets.UTF_8)
     
     // Vector de Inicialización (IV) de 16 bytes (128 bits)
-    private val INIT_VECTOR = "OT_SECURE_IV_1234".toByteArray(Charsets.UTF_8)
+    private val INIT_VECTOR = "OT_SECURE_IV_16b".toByteArray(Charsets.UTF_8)
 
     /**
      * Cifra una cadena de texto en formato JSON utilizando AES/CBC/PKCS5Padding

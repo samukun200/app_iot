@@ -34,10 +34,17 @@ class AcceptThread(
     init {
         try {
             @SuppressLint("MissingPermission")
-            val tmpSocket = bluetoothAdapter.listenUsingRfcommWithServiceRecord(
-                BluetoothConstants.SERVICE_NAME,
-                BluetoothConstants.SPP_UUID
-            )
+            val tmpSocket = try {
+                bluetoothAdapter.listenUsingInsecureRfcommWithServiceRecord(
+                    BluetoothConstants.SERVICE_NAME,
+                    BluetoothConstants.SPP_UUID
+                )
+            } catch (e: Exception) {
+                bluetoothAdapter.listenUsingRfcommWithServiceRecord(
+                    BluetoothConstants.SERVICE_NAME,
+                    BluetoothConstants.SPP_UUID
+                )
+            }
             serverSocket = tmpSocket
         } catch (e: IOException) {
             onError("Error al iniciar el Servidor Bluetooth: ${e.localizedMessage}")
@@ -90,7 +97,11 @@ class ConnectThread(
     init {
         try {
             @SuppressLint("MissingPermission")
-            val tmpSocket = device.createRfcommSocketToServiceRecord(BluetoothConstants.SPP_UUID)
+            val tmpSocket = try {
+                device.createInsecureRfcommSocketToServiceRecord(BluetoothConstants.SPP_UUID)
+            } catch (e: Exception) {
+                device.createRfcommSocketToServiceRecord(BluetoothConstants.SPP_UUID)
+            }
             socket = tmpSocket
         } catch (e: IOException) {
             onConnectionFailed("Error al crear el socket del cliente: ${e.localizedMessage}")
